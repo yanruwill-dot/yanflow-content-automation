@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="yanflow-token" content="__YANFLOW_SESSION_TOKEN__" />
+  <title>焰流 YanFlow · 内容自动化中枢</title>
+  <link rel="stylesheet" href="/static/styles.css?v=20260726-6" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="app-shell">
+    <aside class="rail">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <div>
+          <strong>焰流</strong>
+          <small>YANFLOW</small>
+        </div>
+      </div>
+
+      <nav class="rail-nav" aria-label="主导航">
+        <button class="nav-item active" data-view="factory">
+          <span class="nav-icon">01</span>
+          <span>内容工厂</span>
+        </button>
+        <button class="nav-item" data-view="risk">
+          <span class="nav-icon">02</span>
+          <span>风控中心</span>
+        </button>
+        <button class="nav-item" data-view="settings">
+          <span class="nav-icon">03</span>
+          <span>定时与连接</span>
+        </button>
+      </nav>
+
+      <div class="rail-note">
+        <span class="pulse-dot"></span>
+        <p>本地私有运行</p>
+        <small>密钥不进入浏览器</small>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">CONTENT OPERATIONS / SAFE AUTOMATION</p>
+          <h1>从选题到发布，<em>只走一条线。</em></h1>
+        </div>
+        <div class="top-actions">
+          <div class="system-pill" id="systemPill">
+            <span></span>
+            <b>正在检查系统</b>
+          </div>
+          <button class="button button-primary" id="newJobButton">新建内容任务</button>
+        </div>
+      </header>
+
+      <section class="view active" id="factoryView">
+        <section class="metric-row">
+          <article class="metric-card ink">
+            <span>今日流水线</span>
+            <strong id="todayJobs">0</strong>
+            <small>创建的内容任务</small>
+          </article>
+          <article class="metric-card">
+            <span>当前阶段</span>
+            <strong class="metric-text" id="currentStage">待启动</strong>
+            <small id="currentMessage">选择一个任务查看</small>
+          </article>
+          <article class="metric-card">
+            <span>内容质量</span>
+            <strong id="qualityScore">—</strong>
+            <small>来源、结构、事实、表达</small>
+          </article>
+          <article class="metric-card safety">
+            <span>发布闸门</span>
+            <strong class="metric-text" id="riskLevel">未检查</strong>
+            <small>限频、重复、账号、文案</small>
+          </article>
+        </section>
+
+        <section class="command-deck">
+          <div class="deck-heading">
+            <div>
+              <span class="section-index">A</span>
+              <div>
+                <p class="eyebrow">ONE BRIEF, ONE VERIFIED PIPELINE</p>
+                <h2>告诉系统今天要解决什么问题</h2>
+              </div>
+            </div>
+            <span class="safe-label">默认跑到完整 Dry-run，不会直接发表</span>
+          </div>
+
+          <form id="jobForm" class="brief-form">
+            <label class="field field-wide">
+              <span>内容方向</span>
+              <textarea id="briefInput" rows="3" maxlength="500" placeholder="例如：传统企业为什么买了很多 AI 工具，效率还是没有提升？"></textarea>
+              <small>系统会从已配置公开来源中找证据、去重、评分，再生成内容。</small>
+            </label>
+            <label class="field">
+              <span>核心读者</span>
+              <input id="audienceInput" maxlength="160" value="企业老板、业务负责人和内容创作者" />
+            </label>
+            <fieldset class="field target-field">
+              <legend>目标平台</legend>
+              <label class="platform-choice">
+                <input type="checkbox" name="target" value="小红书" checked />
+                <span class="platform-badge red">红</span>
+                <span><b>小红书</b><small>3:4 图组 + 图文</small></span>
+              </label>
+              <label class="platform-choice">
+                <input type="checkbox" name="target" value="微信公众号" checked />
+                <span class="platform-badge green">微</span>
+                <span><b>公众号</b><small>贴图 + 图文</small></span>
+              </label>
+            </fieldset>
+            <div class="creation-settings">
+              <label class="field">
+                <span>小红书发布账号</span>
+                <select id="xhsAccountSelect">
+                  <option value="">正在读取可用账号…</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>公众号发布账号</span>
+                <select id="wechatAccountSelect">
+                  <option value="">正在读取可用账号…</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>文章与贴图排版</span>
+                <select id="layoutSelect">
+                  <option value="editorial">商业杂志</option>
+                  <option value="clean">清爽阅读</option>
+                  <option value="song">宋式留白</option>
+                </select>
+                <small id="layoutDescription">深墨标题区、青柠强调，适合观点和商业判断</small>
+              </label>
+            </div>
+            <div class="run-panel">
+              <div>
+                <span class="run-number">01—07</span>
+                <p>来源 → 选题 → 写稿 → 配图 → 审核 → Dry-run → 发布核验</p>
+              </div>
+              <button class="button button-run" type="submit">
+                <span>启动安全自动流程</span>
+                <i aria-hidden="true">↗</i>
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="pipeline-section">
+          <div class="section-title">
+            <div>
+              <span class="section-index">B</span>
+              <div>
+                <p class="eyebrow">LIVE PIPELINE</p>
+                <h2>当前任务流水线</h2>
+              </div>
+            </div>
+            <select id="jobSelect" aria-label="选择任务">
+              <option value="">暂无任务</option>
+            </select>
+          </div>
+
+          <div class="pipeline" id="pipeline">
+            <article data-stage="research">
+              <span>01</span>
+              <div><b>选题雷达</b><small>抓取、去重、评分</small></div>
+              <i></i>
+            </article>
+            <article data-stage="content">
+              <span>02</span>
+              <div><b>内容生成</b><small>证据、标题、正文</small></div>
+              <i></i>
+            </article>
+            <article data-stage="images">
+              <span>03</span>
+              <div><b>Image2 配图</b><small>九图、中文、裁切</small></div>
+              <i></i>
+            </article>
+            <article data-stage="risk">
+              <span>04</span>
+              <div><b>发布风控</b><small>重复、限频、账号</small></div>
+              <i></i>
+            </article>
+            <article data-stage="publish">
+              <span>05</span>
+              <div><b>平台核验</b><small>详情、公开链接</small></div>
+              <i></i>
+            </article>
+          </div>
+
+          <div class="progress-console" id="progressConsole">
+            <div class="progress-copy">
+              <div>
+                <span class="progress-live"><i></i> LIVE PROGRESS</span>
+                <h3 id="progressPhase">等待启动</h3>
+                <p id="progressStep">创建任务后，这里会显示正在抓取、生成和检查的具体步骤。</p>
+              </div>
+              <strong id="progressPercent">0%</strong>
+            </div>
+            <div class="progress-row">
+              <span>总流程</span>
+              <div class="progress-track"><i id="overallProgressBar"></i></div>
+              <b id="overallProgressText">0%</b>
+            </div>
+            <div class="progress-row stage">
+              <span>当前阶段</span>
+              <div class="progress-track"><i id="stageProgressBar"></i></div>
+              <b id="stageProgressText">0%</b>
+            </div>
+            <div class="progress-meta">
+              <span id="progressCount">0 / 6 步</span>
+              <span id="progressStats">等待任务</span>
+              <span id="progressUpdated">—</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="content-grid">
+          <article class="panel topics-panel">
+            <header class="panel-header">
+              <div>
+                <p class="eyebrow">TOPIC DECISION</p>
+                <h3>选题候选</h3>
+              </div>
+              <span class="count-badge" id="topicCount">0 条</span>
+            </header>
+            <div class="topic-list" id="topicList">
+              <div class="empty-state">
+                <span>尚未运行</span>
+                <p>自动选题完成后，这里会显示评分、判断理由和推荐用途。</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel output-panel">
+            <header class="panel-header">
+              <div>
+                <p class="eyebrow">MASTER CONTENT</p>
+                <h3>一稿双发</h3>
+              </div>
+              <button class="text-button" id="openPreviewButton" disabled>打开公众号预览 ↗</button>
+            </header>
+            <div class="content-preview" id="contentPreview">
+              <div class="content-kicker">SELECTED STORY</div>
+              <h4>等待系统选出今天最值得讲的主题</h4>
+              <p>正文生成后，这里会显示公众号标题、小红书标题、内容摘要和质量审稿。</p>
+            </div>
+            <div class="quality-strip">
+              <div><span>事实一致</span><b id="factScore">—</b></div>
+              <div><span>表达质量</span><b id="expressionScore">—</b></div>
+              <div><span>平台适配</span><b id="platformScore">—</b></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-grid lower-grid">
+          <article class="panel image-panel">
+            <header class="panel-header">
+              <div>
+                <p class="eyebrow">VISUAL PACK</p>
+                <h3>小红书 / 公众号贴图</h3>
+              </div>
+              <button class="text-button" id="imageButton" disabled>生成图组</button>
+            </header>
+            <div class="image-grid" id="imageGrid">
+              <div class="image-placeholder"><span>01</span><b>封面</b></div>
+              <div class="image-placeholder"><span>02</span><b>痛点</b></div>
+              <div class="image-placeholder"><span>03</span><b>逻辑</b></div>
+              <div class="image-placeholder"><span>04—09</span><b>流程与行动</b></div>
+            </div>
+          </article>
+
+          <article class="panel publish-panel">
+            <header class="panel-header">
+              <div>
+                <p class="eyebrow">PUBLISH GATE</p>
+                <h3>正式发布之前</h3>
+              </div>
+              <span class="gate-state" id="gateState">LOCKED</span>
+            </header>
+            <div class="task-publish-settings">
+              <div class="settings-caption">
+                <b>本任务发布设置</b>
+                <small>正式提交前可换账号和排版；更改后要重新 Dry-run</small>
+              </div>
+              <div class="task-settings-grid">
+                <label class="field">
+                  <span>小红书账号</span>
+                  <select id="currentXhsAccount"></select>
+                </label>
+                <label class="field">
+                  <span>公众号账号</span>
+                  <select id="currentWechatAccount"></select>
+                </label>
+                <label class="field">
+                  <span>排版</span>
+                  <select id="currentLayout"></select>
+                </label>
+              </div>
+              <button class="button button-outline settings-save" id="saveTaskSettingsButton" disabled>保存本任务设置</button>
+            </div>
+            <div class="check-list" id="checkList">
+              <label><span></span><p><b>来源与事实</b><small>保留原始来源和风险说明</small></p></label>
+              <label><span></span><p><b>内容与图片不重复</b><small>感知哈希对比历史发布库</small></p></label>
+              <label><span></span><p><b>账号与发布频率</b><small>3小时间隔、单账号每日最多3次</small></p></label>
+              <label><span></span><p><b>蚁小二完整 Dry-run</b><small>账号、Schema、校验、重复任务</small></p></label>
+            </div>
+            <div class="publish-actions">
+              <button class="button button-outline" id="dryRunButton" disabled>运行发布预检</button>
+              <button class="button button-danger" id="liveButton" disabled>正式发布</button>
+            </div>
+            <p class="boundary">验证码、实名、登录失效或平台风控出现时，系统立即停，不绕过。</p>
+          </article>
+        </section>
+      </section>
+
+      <section class="view" id="riskView">
+        <div class="view-heading">
+          <p class="eyebrow">RISK & COMPLIANCE</p>
+          <h2>把“不会乱发”做成系统硬规则</h2>
+          <p>这里不是反检测工具。它的作用是减少重复、过频、错账号、违规文案和错误重试。</p>
+        </div>
+        <div class="risk-board">
+          <article>
+            <span>01</span><h3>官方通道优先</h3>
+            <p>所有平台提交统一走蚁小二审计入口，不直接接管平台后台，不保存 Cookie。</p>
+          </article>
+          <article>
+            <span>02</span><h3>重复内容硬拦截</h3>
+            <p>图片感知哈希、内容指纹、任务历史三重检查；新链接和新任务号不能证明内容是新的。</p>
+          </article>
+          <article>
+            <span>03</span><h3>频率上限</h3>
+            <p>同一账号至少间隔180分钟，每日最多3次；达到上限后任务保留但不提交。</p>
+          </article>
+          <article>
+            <span>04</span><h3>真实结果分层</h3>
+            <p>本地成品、API提交、平台状态、公开链接分开记录。任务ID不等于已经发表。</p>
+          </article>
+          <article>
+            <span>05</span><h3>平台检查点</h3>
+            <p>验证码、实名、登录过期、代理或审核都由平台决定；系统只停止并记录原话。</p>
+          </article>
+          <article>
+            <span>06</span><h3>正式发布总开关</h3>
+            <p>系统可以全自动跑到Dry-run；正式发表必须通过预检并输入确认短语。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="settingsView">
+        <div class="view-heading">
+          <p class="eyebrow">SCHEDULE & CONNECTORS</p>
+          <h2>自动运行，但不自动失控</h2>
+          <p>定时任务只会自动跑到完整发布预检。正式发表总开关不会被定时配置打开。</p>
+        </div>
+        <div class="settings-layout">
+          <form class="panel settings-card" id="settingsForm">
+            <header class="panel-header">
+              <div><p class="eyebrow">SCHEDULE</p><h3>内容日历</h3></div>
+              <label class="switch"><input type="checkbox" id="scheduleEnabled" /><span></span></label>
+            </header>
+            <label class="field">
+              <span>每天启动时间</span>
+              <input type="time" id="scheduleTime" value="09:30" />
+            </label>
+            <div class="field">
+              <span>运行日期</span>
+              <div class="weekday-row" id="weekdayRow">
+                <label><input type="checkbox" value="1" checked /><span>一</span></label>
+                <label><input type="checkbox" value="2" checked /><span>二</span></label>
+                <label><input type="checkbox" value="3" checked /><span>三</span></label>
+                <label><input type="checkbox" value="4" checked /><span>四</span></label>
+                <label><input type="checkbox" value="5" checked /><span>五</span></label>
+                <label><input type="checkbox" value="6" /><span>六</span></label>
+                <label><input type="checkbox" value="7" /><span>日</span></label>
+              </div>
+            </div>
+            <div class="setting-grid">
+              <label class="field">
+                <span>单账号每日上限</span>
+                <input type="number" id="dailyLimit" min="1" max="3" value="3" />
+              </label>
+              <label class="field">
+                <span>最短间隔（分钟）</span>
+                <input type="number" id="minimumInterval" min="180" value="180" />
+              </label>
+            </div>
+            <button class="button button-primary" type="submit">保存定时与风控设置</button>
+          </form>
+
+          <article class="panel connector-card">
+            <header class="panel-header">
+              <div><p class="eyebrow">CONNECTORS</p><h3>能力连接</h3></div>
+              <button class="text-button" id="refreshStatusButton">重新检查</button>
+            </header>
+            <div class="connector-list" id="connectorList">
+              <div class="connector loading"><span></span><div><b>正在检测</b><small>读取本机能力，不回显密钥</small></div></div>
+            </div>
+            <div class="account-list" id="accountList"></div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="liveModal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="liveModalTitle">
+      <button class="modal-close" id="modalCloseButton" aria-label="关闭">×</button>
+      <p class="eyebrow danger">IRREVERSIBLE EXTERNAL ACTION</p>
+      <h2 id="liveModalTitle">这是正式对外发布</h2>
+      <p>系统已完成本地成品、账号、Schema、重复内容和 Dry-run 检查。平台仍可能触发审核、实名、验证码或登录检查。</p>
+      <label class="field">
+        <span>输入“确认正式发布”</span>
+        <input id="liveConfirmation" autocomplete="off" placeholder="确认正式发布" />
+      </label>
+      <div class="modal-actions">
+        <button class="button button-outline" id="modalCancelButton">取消</button>
+        <button class="button button-danger" id="modalPublishButton">提交到目标平台</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+  <script src="/static/app.js?v=20260726-6" defer></script>
+</body>
+</html>
