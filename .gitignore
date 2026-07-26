@@ -5,6 +5,7 @@ tests/__pycache__/
 TEST_RUN_*.md
 node_modules/
 .npm-cache/
+pages-dist/
 dist/
 .next/
 .wrangler/

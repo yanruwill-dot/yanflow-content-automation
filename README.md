@@ -37,16 +37,20 @@ python3 server.py --port 8786
 
 服务只监听 `127.0.0.1`，不会暴露到局域网或公网。
 
-## 线上网页版本
+## GitHub Pages 线上版本
 
-仓库同时包含可部署的响应式网页版本。它可以在浏览器里真实完成选题、内容生成、账号槽位切换、排版切换、贴图预览、发布预检和内容包下载：
+直接打开：
+
+<https://yanruwill-dot.github.io/yanflow-content-automation/>
+
+该版本由 GitHub Pages 托管，可以在浏览器里完成选题、内容生成、账号槽位切换、排版切换、贴图预览、发布预检和内容包下载：
 
 ```bash
 npm install
 npm run dev
 ```
 
-线上网页不保存平台账号密码或发布密钥，因此“正式发表”会停在本地授权闸门；需要真实外发时，使用上面的 Python 本地版连接蚁小二或公众号授权通道。
+GitHub Pages 版本不保存平台账号密码或发布密钥，因此“正式发表”会停在本地授权闸门；需要真实外发时，使用上面的 Python 本地版连接蚁小二或公众号授权通道。
 
 ## 屏幕适配
 
@@ -100,7 +104,7 @@ node --check static/app.js
 python3 -m py_compile core.py server.py
 npm run build
 node --test tests/rendered-html.test.mjs
-npm run lint
+npm run check
 ```
 
 详细验证见 [TEST_REPORT.md](TEST_REPORT.md)。
