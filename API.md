@@ -2,11 +2,12 @@
 
 基础地址：`http://127.0.0.1:8786`
 
-写请求必须带首页注入的 `X-Yanflow-Token`，浏览器页面会自动处理。
+除健康检查和配对入口外，读写请求都必须带 `X-Yanflow-Token`。本地首页会注入令牌；正式 GitHub Pages 通过受限配对入口把令牌写入当前标签的 `sessionStorage`。
 
 ## 读取
 
 - `GET /api/health`：服务健康。
+- `GET /connect?return=https://yanruwill-dot.github.io/yanflow-content-automation/`：只允许正式 GitHub Pages 回跳，令牌放在 URL fragment 中，不进入 GitHub 请求日志。
 - `GET /api/status?accounts=1`：连接器、可用账号和三套排版，只返回脱敏状态。
 - `GET /api/settings`：定时和限频设置。
 - `GET /api/jobs`：任务列表。
@@ -16,6 +17,7 @@
 
 ## 写入
 
+- `POST /api/accounts/login`：打开本机蚁小二4.0的账号登录入口；扫码、验证码和实名确认仍由用户完成。
 - `POST /api/jobs`：新建任务，可传 `account_ids` 和 `layout`：
 
 ```json

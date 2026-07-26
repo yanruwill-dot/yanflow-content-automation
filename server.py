@@ -6,6 +6,7 @@ import mimetypes
 import os
 import re
 import secrets
+import subprocess
 import threading
 import urllib.parse
 from http import HTTPStatus
@@ -20,6 +21,8 @@ STATIC_ROOT = core.APP_ROOT / "static"
 SESSION_TOKEN = secrets.token_urlsafe(24)
 MAX_BODY = 1_000_000
 SCHEDULER = core.Scheduler()
+REMOTE_APP_ORIGIN = "https://yanruwill-dot.github.io"
+REMOTE_APP_URL = f"{REMOTE_APP_ORIGIN}/yanflow-content-automation/"
 
 
 class HubHandler(BaseHTTPRequestHandler):
@@ -27,6 +30,29 @@ class HubHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format: str, *args: Any) -> None:
         print(f"[yanflow] {self.address_string()} {format % args}")
+
+    def request_origin(self) -> str:
+        return self.headers.get("Origin") or ""
+
+    def origin_allowed(self, origin: str) -> bool:
+        if origin == REMOTE_APP_ORIGIN:
+            return True
+        try:
+            parsed = urllib.parse.urlparse(origin)
+        except ValueError:
+            return False
+        return (
+            parsed.scheme == "http"
+            and parsed.hostname in {"127.0.0.1", "localhost"}
+            and parsed.port == self.server.server_port
+        )
+
+    def add_cors_headers(self) -> None:
+        origin = self.request_origin()
+        if origin and self.origin_allowed(origin):
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
+            self.send_header("Access-Control-Allow-Private-Network", "true")
 
     def json_response(self, payload: Any, status: int = 200) -> None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -36,6 +62,7 @@ class HubHandler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
+        self.add_cors_headers()
         self.end_headers()
         self.wfile.write(body)
 
@@ -50,6 +77,7 @@ class HubHandler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "no-referrer")
+        self.add_cors_headers()
         self.send_header(
             "Content-Security-Policy",
             "default-src 'none'; img-src 'self' data: https:; "
@@ -84,17 +112,28 @@ class HubHandler(BaseHTTPRequestHandler):
         origin = self.headers.get("Origin")
         if not origin:
             return True
-        try:
-            parsed = urllib.parse.urlparse(origin)
-        except ValueError:
-            return False
-        return parsed.hostname in {"127.0.0.1", "localhost"} and parsed.port == self.server.server_port
+        return self.origin_allowed(origin)
 
-    def require_write_access(self) -> bool:
+    def require_api_access(self) -> bool:
         if not self.valid_session() or not self.valid_origin():
             self.error_response("本地会话校验失败", HTTPStatus.FORBIDDEN)
             return False
         return True
+
+    def do_OPTIONS(self) -> None:
+        origin = self.request_origin()
+        if not origin or not self.origin_allowed(origin):
+            self.send_error(HTTPStatus.FORBIDDEN)
+            return
+        self.send_response(HTTPStatus.NO_CONTENT)
+        self.add_cors_headers()
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header(
+            "Access-Control-Allow-Headers",
+            "Content-Type, X-Yanflow-Token",
+        )
+        self.send_header("Access-Control-Max-Age", "600")
+        self.end_headers()
 
     def serve_file(
         self,
@@ -123,6 +162,7 @@ class HubHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "no-referrer")
+        self.add_cors_headers()
         if isolated_preview:
             self.send_header(
                 "Content-Security-Policy",
@@ -140,6 +180,25 @@ class HubHandler(BaseHTTPRequestHandler):
         query = urllib.parse.parse_qs(parsed.query)
         if path == "/api/health":
             self.json_response({"ok": True, "service": "yanflow", "time": core.now_iso()})
+            return
+        if path == "/connect":
+            return_url = query.get("return", [""])[0]
+            if return_url != REMOTE_APP_URL:
+                self.error_response("只允许连接官方 YanFlow GitHub 页面", HTTPStatus.BAD_REQUEST)
+                return
+            fragment = urllib.parse.urlencode(
+                {
+                    "yanflow_token": SESSION_TOKEN,
+                    "yanflow_bridge": f"http://127.0.0.1:{self.server.server_port}",
+                }
+            )
+            self.send_response(HTTPStatus.FOUND)
+            self.send_header("Location", f"{REMOTE_APP_URL}#{fragment}")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Referrer-Policy", "no-referrer")
+            self.end_headers()
+            return
+        if path.startswith("/api/") and not self.require_api_access():
             return
         if path == "/api/status":
             include_accounts = query.get("accounts", ["0"])[0] == "1"
@@ -249,11 +308,39 @@ class HubHandler(BaseHTTPRequestHandler):
         threading.Thread(target=runner, daemon=True).start()
 
     def do_POST(self) -> None:
-        if not self.require_write_access():
+        if not self.require_api_access():
             return
         path = urllib.parse.urlparse(self.path).path
         try:
             payload = self.read_payload()
+            if path == "/api/accounts/login":
+                platform = str(payload.get("platform") or "")
+                if platform not in {"小红书", "微信公众号"}:
+                    raise core.HubError("账号平台无效")
+                app_path = Path("/Applications/蚁小二4.0.app")
+                if not app_path.exists():
+                    raise core.HubError("本机没有安装蚁小二4.0")
+                result = subprocess.run(
+                    ["open", "-a", "蚁小二4.0"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                )
+                if result.returncode != 0:
+                    raise core.HubError(result.stderr or "蚁小二4.0启动失败")
+                self.json_response(
+                    {
+                        "ok": True,
+                        "action": "opened_yixiaoer",
+                        "platform": platform,
+                        "checkpoint": (
+                            f"请在蚁小二4.0里添加或重新登录{platform}账号；"
+                            "扫码、验证码或实名确认完成后，回到本页刷新账号。"
+                        ),
+                    }
+                )
+                return
             if path == "/api/jobs":
                 job = core.create_job(payload)
                 self.json_response({"ok": True, "job": job}, HTTPStatus.CREATED)

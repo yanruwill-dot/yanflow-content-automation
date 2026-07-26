@@ -161,6 +161,17 @@ a { color: inherit; text-decoration: none; }
   color: #b9c1b2;
   font-size: 11px;
 }
+.bridgePill {
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, .025);
+  padding: 12px 14px;
+  cursor: pointer;
+}
+.bridgePill.connected {
+  border-color: rgba(202, 255, 63, .42);
+  color: var(--acid);
+}
+.bridgePill.error { border-color: rgba(255, 112, 72, .55); }
 
 .metrics {
   display: grid;
@@ -297,6 +308,24 @@ a { color: inherit; text-decoration: none; }
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
+.accountField { justify-content: space-between; }
+.accountActions {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.accountActions button {
+  border: 0;
+  background: transparent;
+  color: var(--acid);
+  padding: 0;
+  cursor: pointer;
+  font-size: 10px;
+}
 .runPanel {
   grid-column: 1 / -1;
   min-height: 88px;
@@ -431,19 +460,51 @@ a { color: inherit; text-decoration: none; }
   font-size: 10px;
 }
 .topicList { display: grid; }
-.topicList > div {
+.topicList > button {
+  width: 100%;
+  color: inherit;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
   display: grid;
   grid-template-columns: 50px minmax(0, 1fr);
   gap: 14px;
   padding: 18px;
   border-bottom: 1px solid var(--line);
 }
-.topicList > div:last-child { border-bottom: 0; }
-.topicList > div.selected { background: var(--acid-soft); }
-.topicList > div > strong { color: var(--acid); font: 500 24px/1 var(--serif); }
+.topicList > button:last-child { border-bottom: 0; }
+.topicList > button:hover,
+.topicList > button.selected { background: var(--acid-soft); }
+.topicList > button > strong { color: var(--acid); font: 500 24px/1 var(--serif); }
 .topicList section span { color: var(--muted); font: 8px/1 var(--mono); }
 .topicList h3 { margin: 7px 0; font: 500 15px/1.35 var(--serif); }
 .topicList p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
+.topicAction {
+  display: grid;
+  gap: 11px;
+  border-top: 1px solid var(--line);
+  padding: 18px;
+}
+.topicAction small {
+  min-height: 2.8em;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+.topicAction button,
+.imageGenerateButton {
+  min-height: 44px;
+  border: 1px solid rgba(202, 255, 63, .4);
+  background: var(--acid);
+  color: var(--ink);
+  padding: 0 15px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 10px;
+}
+.topicAction button:disabled,
+.imageGenerateButton:disabled { opacity: .55; cursor: progress; }
 .articlePreview { background: var(--paper); color: var(--ink); padding: clamp(25px, 4vw, 54px); }
 .articlePreview > span { color: #6c7266; font: 9px/1 var(--mono); letter-spacing: .13em; }
 .articlePreview > h3 { margin: 13px 0 18px; font: 700 clamp(27px, 4vw, 48px)/1.2 var(--serif); letter-spacing: -.035em; }
@@ -461,6 +522,8 @@ a { color: inherit; text-decoration: none; }
 .qualityBar b { margin-left: 6px; color: var(--acid); font: 500 15px/1 var(--mono); }
 
 .visualBoard { margin-top: 28px; padding: clamp(22px, 3vw, 38px); }
+.visualHeading { align-items: center; }
+.visualHeading .imageGenerateButton { margin-left: auto; }
 .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .cards article {
   min-width: 0;
@@ -487,6 +550,35 @@ a { color: inherit; text-decoration: none; }
 .visualBoard.song .coverCard { background: #eee4cd; color: #31291f; border-color: #a84831; }
 .visualBoard.song .coverCard p { color: #a84831; }
 .visualBoard.song .coverCard b, .visualBoard.song .pointCard { background: #a84831; color: #fff8e9; }
+.imageCards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.imageCards figure {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 3 / 4;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #090a09;
+}
+.imageCards img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.imageCards figcaption {
+  position: absolute;
+  left: 9px;
+  bottom: 9px;
+  padding: 6px 7px;
+  color: var(--paper);
+  background: rgba(0, 0, 0, .72);
+  font: 8px/1 var(--mono);
+}
 
 .riskBoard {
   scroll-margin-top: 24px;
@@ -650,12 +742,22 @@ footer p { margin: 0; }
   .progressMeta { align-items: flex-start; flex-direction: column; gap: 5px; }
   .results { margin-top: 14px; gap: 14px; }
   .panel > header { min-height: 78px; padding: 16px; }
-  .topicList > div { grid-template-columns: 42px minmax(0, 1fr); padding: 15px; }
+  .topicList > button { grid-template-columns: 42px minmax(0, 1fr); padding: 15px; }
   .articlePreview { padding: 25px 19px; }
   .articlePreview > h3 { font-size: 30px; }
   .articlePreview section p { font-size: 15px; }
   .qualityBar span { padding: 12px 6px; }
   .cards {
+    grid-template-columns: 1fr;
+    width: min(100%, 390px);
+    margin: 0 auto;
+  }
+  .visualHeading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .visualHeading .imageGenerateButton { width: 100%; margin-left: 0; }
+  .imageCards {
     grid-template-columns: 1fr;
     width: min(100%, 390px);
     margin: 0 auto;

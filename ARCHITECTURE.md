@@ -35,6 +35,7 @@ yxer live → query details → 平台状态 / 公开链接
 
 - `server.py`：仅监听本机的 HTTP 服务、会话校验、静态页面和后台任务入口。
 - `core.py`：任务状态机、连接器、风控、图片去重、发布包和定时器。
+- `app/`：GitHub Pages 中台；负责选爆款、真实进度、账号槽、Image2 成品和发布确认。
 - `static/`：无外部前端依赖的单页控制台。
 - `runtime/jobs/`：每次任务的内容、图片、发布包、日志和状态。
 - `tests/`：核心逻辑和 HTTP 安全边界测试。
@@ -60,7 +61,9 @@ yxer live → query details → 平台状态 / 公开链接
 ## 安全设计
 
 - HTTP 服务仅绑定 `127.0.0.1`。
-- 写接口要求随机会话令牌和本机 Origin。
+- 所有非健康检查 API 都要求随机会话令牌。
+- 跨域只允许 `https://yanruwill-dot.github.io`，不使用通配符；预检只放行明确的方法和请求头。
+- GitHub Pages 配对只接受固定回跳地址，令牌通过 fragment 返回并只存于 `sessionStorage`。
 - Cookie 使用 `HttpOnly; SameSite=Strict`。
 - 页面不可被 iframe 嵌入；响应使用 `nosniff`。
 - 生成文章预览使用隔离 CSP，禁止脚本运行、表单提交和顶层跳转。

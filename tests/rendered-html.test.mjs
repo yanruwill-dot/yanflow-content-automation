@@ -20,9 +20,14 @@ test("ships the complete static application and required public assets", async (
   assert.match(page, /"use client"/);
   assert.match(page, /function buildOutput/);
   assert.match(page, /localStorage/);
-  assert.match(page, /启动安全自动流程/);
+  assert.match(page, /生成 5 个爆款候选/);
+  assert.match(page, /Image2 九图/);
+  assert.match(page, /登录新账号/);
+  assert.match(page, /X-Yanflow-Token/);
+  assert.match(page, /确认正式发布/);
   assert.match(css, /@media \(max-width: 760px\)/);
   assert.match(css, /overflow-x:\s*clip/);
+  assert.match(css, /\.imageCards/);
   assert.ok(files.includes("og.png"));
   assert.ok(files.includes("favicon.png"));
 });

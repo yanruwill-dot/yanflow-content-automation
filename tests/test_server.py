@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import json
+import http.client
 import tempfile
 import threading
 import unittest
 import urllib.error
+import urllib.parse
 import urllib.request
 from http.server import ThreadingHTTPServer
 from pathlib import Path
+from unittest import mock
 
 import core
 import server
@@ -48,6 +51,7 @@ class ServerTests(unittest.TestCase):
         method: str = "GET",
         body: dict | None = None,
         token: bool = False,
+        origin: str = "",
     ) -> tuple[int, dict | str, dict]:
         data = json.dumps(body, ensure_ascii=False).encode("utf-8") if body is not None else None
         headers = {"Accept": "application/json"}
@@ -55,6 +59,8 @@ class ServerTests(unittest.TestCase):
             headers["Content-Type"] = "application/json"
         if token:
             headers["X-Yanflow-Token"] = server.SESSION_TOKEN
+        if origin:
+            headers["Origin"] = origin
         request = urllib.request.Request(
             self.base + path,
             data=data,
@@ -90,6 +96,62 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(status, 403)
         self.assertFalse(payload["ok"])
 
+    def test_remote_bridge_pairing_and_private_network_cors(self) -> None:
+        connection = http.client.HTTPConnection(
+            "127.0.0.1",
+            self.httpd.server_port,
+            timeout=5,
+        )
+        return_url = urllib.parse.quote(server.REMOTE_APP_URL, safe="")
+        connection.request("GET", f"/connect?return={return_url}")
+        response = connection.getresponse()
+        self.assertEqual(response.status, 302)
+        location = response.getheader("Location") or ""
+        self.assertTrue(location.startswith(server.REMOTE_APP_URL + "#"))
+        self.assertIn("yanflow_token=", location)
+        connection.close()
+
+        status, payload, headers = self.request(
+            "/api/status?accounts=1",
+            token=True,
+            origin=server.REMOTE_APP_ORIGIN,
+        )
+        self.assertEqual(status, 200)
+        self.assertTrue(payload["ok"])
+        self.assertEqual(
+            headers["Access-Control-Allow-Origin"],
+            server.REMOTE_APP_ORIGIN,
+        )
+        self.assertEqual(headers["Access-Control-Allow-Private-Network"], "true")
+
+    def test_remote_origin_still_requires_pairing_token(self) -> None:
+        status, payload, _ = self.request(
+            "/api/status?accounts=1",
+            origin=server.REMOTE_APP_ORIGIN,
+        )
+        self.assertEqual(status, 403)
+        self.assertFalse(payload["ok"])
+
+    @mock.patch("server.subprocess.run")
+    @mock.patch("server.Path.exists", return_value=True)
+    def test_account_login_opens_official_yixiaoer_checkpoint(
+        self,
+        _exists: mock.Mock,
+        run: mock.Mock,
+    ) -> None:
+        run.return_value = mock.Mock(returncode=0, stderr="")
+        status, payload, _ = self.request(
+            "/api/accounts/login",
+            method="POST",
+            body={"platform": "小红书"},
+            token=True,
+            origin=server.REMOTE_APP_ORIGIN,
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["action"], "opened_yixiaoer")
+        self.assertIn("扫码", payload["checkpoint"])
+        run.assert_called_once()
+
     def test_create_and_read_job(self) -> None:
         status, payload, _ = self.request(
             "/api/jobs",
@@ -99,7 +161,7 @@ class ServerTests(unittest.TestCase):
         )
         self.assertEqual(status, 201)
         identifier = payload["job"]["id"]
-        status, payload, _ = self.request(f"/api/jobs/{identifier}")
+        status, payload, _ = self.request(f"/api/jobs/{identifier}", token=True)
         self.assertEqual(status, 200)
         self.assertEqual(payload["job"]["brief"], "测试自动选题系统")
 
@@ -142,7 +204,10 @@ class ServerTests(unittest.TestCase):
         raw = core.load_job(created["id"])
         raw["content"] = {"preview_path": str(preview)}
         core.save_job(raw)
-        status, html, headers = self.request(f"/api/jobs/{created['id']}/preview")
+        status, html, headers = self.request(
+            f"/api/jobs/{created['id']}/preview",
+            token=True,
+        )
         self.assertEqual(status, 200)
         self.assertIn("中文预览", html)
         self.assertIn('data-layout="editorial"', html)
