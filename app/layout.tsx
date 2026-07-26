@@ -15,6 +15,10 @@ export const metadata: Metadata = {
     description: "一条线完成选题、生成、配图、排版和安全发布。",
     images: ["/og.png"],
   },
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
