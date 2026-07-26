@@ -37,6 +37,17 @@ python3 server.py --port 8786
 
 服务只监听 `127.0.0.1`，不会暴露到局域网或公网。
 
+## 线上网页版本
+
+仓库同时包含可部署的响应式网页版本。它可以在浏览器里真实完成选题、内容生成、账号槽位切换、排版切换、贴图预览、发布预检和内容包下载：
+
+```bash
+npm install
+npm run dev
+```
+
+线上网页不保存平台账号密码或发布密钥，因此“正式发表”会停在本地授权闸门；需要真实外发时，使用上面的 Python 本地版连接蚁小二或公众号授权通道。
+
 ## 屏幕适配
 
 - 桌面与超宽网页自动使用全部可用宽度，不再留下大块无效黑色区域。
@@ -77,6 +88,7 @@ python3 server.py --port 8786
 - `wechat-image-studio`
 - `yxer` 3.x
 - `codex_yixiaoer_autopublish.py`
+- Node.js 22.13+（线上网页版本）
 
 密钥从本机环境变量或 `~/.hermes/.env` 读取，只在后端进程使用，接口不会回显密钥。
 
@@ -86,6 +98,9 @@ python3 server.py --port 8786
 python3 -m unittest discover -s tests -v
 node --check static/app.js
 python3 -m py_compile core.py server.py
+npm run build
+node --test tests/rendered-html.test.mjs
+npm run lint
 ```
 
 详细验证见 [TEST_REPORT.md](TEST_REPORT.md)。
