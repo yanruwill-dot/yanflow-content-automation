@@ -188,6 +188,16 @@ function outputFromJob(job: Job, audience: string): Output {
   };
 }
 
+function normalizeSavedOutput(value: Output): Output {
+  return {
+    ...value,
+    topics: (value.topics || []).map((topic, index) => ({
+      ...topic,
+      id: topic.id || `saved-${index + 1}`,
+    })),
+  };
+}
+
 function stageFromJob(job: Job) {
   const phase = job.progress_detail?.phase || job.status;
   if (phase === "images" || job.status === "images_ready") return 2;
@@ -315,9 +325,13 @@ export default function Home() {
     const saved = window.localStorage.getItem("yanflow-demo-output");
     if (saved) {
       try {
-        const restored = JSON.parse(saved) as Output;
+        const restored = normalizeSavedOutput(JSON.parse(saved) as Output);
         setOutput(restored);
         setSelectedTopicId(restored.topics[0]?.id || "");
+        window.localStorage.setItem(
+          "yanflow-demo-output",
+          JSON.stringify(restored),
+        );
       } catch {
         window.localStorage.removeItem("yanflow-demo-output");
       }
