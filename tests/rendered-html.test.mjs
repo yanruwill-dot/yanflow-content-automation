@@ -12,10 +12,11 @@ test("builds a GitHub Pages entrypoint with repository-relative assets", async (
 });
 
 test("ships the complete static application and required public assets", async () => {
-  const [page, css, files] = await Promise.all([
+  const [page, css, files, sampleImages] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readdir(new URL("../pages-dist/", import.meta.url)),
+    readdir(new URL("../pages-dist/sample-ai-tools-workflow/", import.meta.url)),
   ]);
   assert.match(page, /"use client"/);
   assert.match(page, /function buildOutput/);
@@ -25,9 +26,14 @@ test("ships the complete static application and required public assets", async (
   assert.match(page, /登录新账号/);
   assert.match(page, /X-Yanflow-Token/);
   assert.match(page, /确认正式发布/);
+  assert.match(page, /SAMPLE_IMAGE_URLS/);
+  assert.match(page, /买再多AI工具也不提效/);
+  assert.match(page, /xhsCopyPreview/);
+  assert.match(page, /老板7天就能启动第一轮/);
   assert.match(css, /@media \(max-width: 760px\)/);
   assert.match(css, /overflow-x:\s*clip/);
   assert.match(css, /\.imageCards/);
   assert.ok(files.includes("og.png"));
   assert.ok(files.includes("favicon.png"));
+  assert.equal(sampleImages.filter((file) => file.endsWith(".png")).length, 9);
 });

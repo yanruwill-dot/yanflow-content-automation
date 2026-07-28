@@ -74,6 +74,14 @@ const DEFAULT_BRIDGE = "http://127.0.0.1:8786";
 const REMOTE_APP_URL =
   "https://yanruwill-dot.github.io/yanflow-content-automation/";
 const PAIR_URL = `${DEFAULT_BRIDGE}/connect?return=${encodeURIComponent(REMOTE_APP_URL)}`;
+const SAMPLE_IMAGE_URLS = Array.from(
+  { length: 9 },
+  (_, index) => `./sample-ai-tools-workflow/${String(index + 1).padStart(2, "0")}.png`,
+);
+
+function revokeBlobUrls(urls: string[]) {
+  urls.filter((url) => url.startsWith("blob:")).forEach((url) => URL.revokeObjectURL(url));
+}
 
 const layouts: Record<
   LayoutId,
@@ -110,9 +118,9 @@ function buildOutput(rawBrief: string, rawAudience: string): Output {
   const subject = brief.replace(/[？?。！!]+$/g, "");
   return {
     brief,
-    title: "AI 工具越买越多，为什么效率反而没有起来？",
-    xhsTitle: "买了 20 个 AI 工具，团队为什么还是很忙？",
-    summary: `真正的问题不是工具少，而是 ${audience} 没有把经验、流程和结果标准连成一条可复用的工作线。`,
+    title: "买了AI工具，为什么效率没起来？",
+    xhsTitle: "买再多AI工具也不提效",
+    summary: `真正的问题不是工具少，而是 ${audience} 没有把工具接进一条可执行、可复核的业务工作流。`,
     topics: [
       {
         id: "demo-1",
@@ -147,22 +155,68 @@ function buildOutput(rawBrief: string, rawAudience: string): Output {
     ],
     sections: [
       {
-        heading: "工具不是系统，能生成不等于能交付",
-        body: "很多公司把 AI 当成更聪明的搜索框：每个人各自提问、各自复制，最后还要人工对齐。单点速度变快了，交接、审稿、核验和发布却没有变，整体效率当然起不来。",
+        heading: "假提效：单点变快，整条流程更忙",
+        body: "员工先让AI生成，再把结果复制到文档、表格和业务系统里，最后继续人工核对、催进度、补异常。工具多了，但流程没变。",
       },
       {
-        heading: "真正需要复制的，是高手做判断的过程",
-        body: "先把选题依据、写作结构、视觉标准、发布闸门和复盘方式拆成可检查的步骤，再让 AI 逐步执行。",
+        heading: "任务和交接没有标准",
+        body: "同一件事，多人多种输入和做法，AI输出无法稳定复用；AI写完还要人工搬到下一个系统，快在生成，慢在流转。",
       },
       {
-        heading: "先跑通一条线，再扩展十个场景",
-        body: "从一个高频内容任务开始：先选题，再生成正文和 Image2 高清图，最后走发布预检与人工确认。",
+        heading: "例外没有出口，也没有结果责任人",
+        body: "一碰到缺资料、改需求或系统报错，员工不知道何时继续、何时交给人；IT管工具、业务管结果，却没人对整条流程负责。",
+      },
+      {
+        heading: "不要看调用次数，要看三个指标",
+        body: "真正判断提效，要连续看真实任务里的单次处理时长、一次通过率和人工接管率，而不是看一次演示有多漂亮。",
+      },
+      {
+        heading: "老板7天就能启动第一轮",
+        body: "画流程、选一个重复任务、准备合格与不合格样例，让AI接其中一步，补异常规则，小批量试跑，最后复盘成SOP。",
       },
     ],
-    xhsBody:
-      "公司买了很多 AI 工具，员工也上了不少课，但团队还是很忙。原因通常不是不会用，而是没有一条从任务输入到结果验收的完整流程。先挑一个高频场景，把选题、生成、配图、审核和发布标准固化，再考虑扩工具。",
+    xhsBody: `很多老板上AI，第一步是买工具、开账号、让员工学提示词。
+
+一两周后演示很多，真正的业务结果却没有明显变化。员工不是不用AI，而是多了一道新工作：先让AI生成，再把结果复制到文档、表格和业务系统里，最后继续人工核对、催进度、补异常。
+
+这就是很多公司的“假提效”：单点变快了，整条流程反而更忙。
+
+问题通常卡在5个地方。
+
+1. 任务没有标准
+同一件事，不同员工有不同输入、判断和输出。AI只能把每个人原来的做法放大，结果当然不稳定。
+
+2. 交接没有标准
+AI写完以后，谁接收、放到哪里、用什么格式、什么时候完成，都没有定义。快在生成，慢在流转。
+
+3. 例外没有出口
+正常情况能自动跑，一碰到缺资料、特殊审批、客户临时修改或系统报错，流程就停。员工不知道什么时候该继续、什么时候必须交给人。
+
+4. 没有结果责任人
+IT负责工具，业务负责结果，中间却没有人对整条流程负责。出了问题，大家都只管自己那一段。
+
+5. 没有统一指标
+很多公司只看“用了多少次AI”，却不看单次处理时长、一次通过率和人工接管率。没有指标，就不知道AI到底是在提效，还是在制造返工。
+
+更有效的顺序是：
+第一，先挑一个高频、规则清楚、出错可控的场景。
+第二，把现在的人工流程画出来，找出最慢、最重复的一段。
+第三，定义输入、判断、输出和验收标准。
+第四，让AI只接其中一段，同时设置异常升级和人工回退。
+第五，连续看几轮真实任务，用处理时长、一次通过率、人工接管率判断是否有效。
+
+老板本周可以直接这样做：
+第1天，画出一条真实业务流程；
+第2天，只选一个重复任务；
+第3天，准备合格和不合格样例；
+第4天，让AI接手其中一步；
+第5天，补上异常和人工接管规则；
+第6天，小批量试跑；
+第7天，复盘后写成SOP。
+
+AI不是装上就会快。先把一条流程跑顺，再扩工具；流程不重做，工具只会更热闹。`,
     tags: ["企业AI", "内容自动化", "组织提效", "AI工作流", "老板思维"],
-    quality: 94,
+    quality: 96,
   };
 }
 
@@ -232,7 +286,7 @@ export default function Home() {
   const [activeStage, setActiveStage] = useState(0);
   const [running, setRunning] = useState(false);
   const [riskChecked, setRiskChecked] = useState(false);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>(SAMPLE_IMAGE_URLS);
   const [toast, setToast] = useState(
     "点击“连接本机”后，可用真实账号、Image2 和发布通道",
   );
@@ -296,7 +350,34 @@ export default function Home() {
             )?.id || "",
       );
       setBridgeState("connected");
-      setToast(`本机已连接，读到 ${nextAccounts.length} 个真实账号槽`);
+      let restored = false;
+      try {
+        const jobsPayload = await bridgeFetch("/api/jobs", {}, token, base);
+        const latestReady = ((jobsPayload.jobs || []) as Job[]).find(
+          (item) => item.status === "images_ready" && item.images?.items?.length,
+        );
+        if (latestReady) {
+          updateFromJob(latestReady);
+          const nextOutput = outputFromJob(latestReady, audience);
+          setOutput(nextOutput);
+          setSelectedTopicId(
+            latestReady.research?.selected?.id || nextOutput.topics[0]?.id || "",
+          );
+          const blobs = await fetchJobImageUrls(latestReady, token, base);
+          setImageUrls((current) => {
+            revokeBlobUrls(current);
+            return blobs;
+          });
+          restored = true;
+        }
+      } catch {
+        // 账号连接成功即可继续；历史成品恢复失败时保留内置示例。
+      }
+      setToast(
+        restored
+          ? `本机已连接，已恢复最新九图成品和 ${nextAccounts.length} 个真实账号槽`
+          : `本机已连接，读到 ${nextAccounts.length} 个真实账号槽`,
+      );
     } catch (error) {
       setBridgeState("error");
       setToast(`本机连接失败：${(error as Error).message}`);
@@ -340,7 +421,7 @@ export default function Home() {
 
   useEffect(
     () => () => {
-      imageUrls.forEach((url) => URL.revokeObjectURL(url));
+      revokeBlobUrls(imageUrls);
     },
     [imageUrls],
   );
@@ -374,6 +455,29 @@ export default function Home() {
       next.progress_detail?.current_step || next.message || "正在处理",
     );
     setActiveStage(stageFromJob(next));
+  }
+
+  async function fetchJobImageUrls(
+    next: Job,
+    token = bridgeToken,
+    base = bridgeBase,
+  ) {
+    return Promise.all(
+      (next.images?.items || []).map(async (item) => {
+        const filename = item.file.split("/").pop();
+        if (!filename) throw new Error("图片文件名无效");
+        const response = await fetch(
+          `${base}/api/jobs/${next.id}/assets/${filename}`,
+          {
+            headers: { "X-Yanflow-Token": token },
+            mode: "cors",
+            credentials: "omit",
+          },
+        );
+        if (!response.ok) throw new Error(`读取图片失败：${filename}`);
+        return URL.createObjectURL(await response.blob());
+      }),
+    );
   }
 
   async function waitForJob(
@@ -430,7 +534,7 @@ export default function Home() {
     setRunning(true);
     setRiskChecked(false);
     setImageUrls((current) => {
-      current.forEach((url) => URL.revokeObjectURL(url));
+      revokeBlobUrls(current);
       return [];
     });
     try {
@@ -493,23 +597,9 @@ export default function Home() {
         body: JSON.stringify({}),
       });
       const finished = await waitForJob(targetJob.id, ["images_ready"], 420);
-      const blobs = await Promise.all(
-        (finished.images?.items || []).map(async (item) => {
-          const filename = item.file.split("/").pop();
-          const response = await fetch(
-            `${bridgeBase}/api/jobs/${finished.id}/assets/${filename}`,
-            {
-              headers: { "X-Yanflow-Token": bridgeToken },
-              mode: "cors",
-              credentials: "omit",
-            },
-          );
-          if (!response.ok) throw new Error(`读取图片失败：${filename}`);
-          return URL.createObjectURL(await response.blob());
-        }),
-      );
+      const blobs = await fetchJobImageUrls(finished);
       setImageUrls((current) => {
-        current.forEach((url) => URL.revokeObjectURL(url));
+        revokeBlobUrls(current);
         return blobs;
       });
       setOutput(outputFromJob(finished, audience));
@@ -852,6 +942,12 @@ export default function Home() {
               {output.sections.map((section) => (
                 <section key={section.heading}><h4>{section.heading}</h4><p>{section.body}</p></section>
               ))}
+            </div>
+            <div className="xhsCopyPreview">
+              <span>小红书正文预览</span>
+              <h4>{output.xhsTitle}</h4>
+              <p>{output.xhsBody}</p>
+              <div>{output.tags.map((tag) => `#${tag}`).join(" ")}</div>
             </div>
             <div className="qualityBar">
               <span>内容质量 <b>{output.quality}</b></span>
