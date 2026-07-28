@@ -74,6 +74,7 @@ const DEFAULT_BRIDGE = "http://127.0.0.1:8786";
 const REMOTE_APP_URL =
   "https://yanruwill-dot.github.io/yanflow-content-automation/";
 const PAIR_URL = `${DEFAULT_BRIDGE}/connect?return=${encodeURIComponent(REMOTE_APP_URL)}`;
+const DEMO_OUTPUT_STORAGE_KEY = "yanflow-demo-output-v2";
 const SAMPLE_IMAGE_URLS = Array.from(
   { length: 9 },
   (_, index) => `./sample-ai-tools-workflow/${String(index + 1).padStart(2, "0")}.png`,
@@ -403,18 +404,15 @@ export default function Home() {
     setBridgeBase(base);
     if (token) void refreshAccounts(token, base);
 
-    const saved = window.localStorage.getItem("yanflow-demo-output");
+    const saved = window.localStorage.getItem(DEMO_OUTPUT_STORAGE_KEY);
     if (saved) {
       try {
         const restored = normalizeSavedOutput(JSON.parse(saved) as Output);
         setOutput(restored);
         setSelectedTopicId(restored.topics[0]?.id || "");
-        window.localStorage.setItem(
-          "yanflow-demo-output",
-          JSON.stringify(restored),
-        );
+        window.localStorage.setItem(DEMO_OUTPUT_STORAGE_KEY, JSON.stringify(restored));
       } catch {
-        window.localStorage.removeItem("yanflow-demo-output");
+        window.localStorage.removeItem(DEMO_OUTPUT_STORAGE_KEY);
       }
     }
   }, []);
@@ -550,10 +548,7 @@ export default function Home() {
       setSelectedTopicId(
         finished.research?.selected?.id || nextOutput.topics[0]?.id || "",
       );
-      window.localStorage.setItem(
-        "yanflow-demo-output",
-        JSON.stringify(nextOutput),
-      );
+      window.localStorage.setItem(DEMO_OUTPUT_STORAGE_KEY, JSON.stringify(nextOutput));
       setToast("真实爆款候选已生成：先点选一条，再用 Image2 出 9 张高清图");
       document.getElementById("results")?.scrollIntoView({ behavior: "smooth" });
     } catch (error) {
