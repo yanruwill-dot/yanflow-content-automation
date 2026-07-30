@@ -35,6 +35,8 @@ test("ships the complete static application and required public assets", async (
   assert.match(page, /function publishGatePassed/);
   assert.match(page, /查看小红书公开内容/);
   assert.match(page, /disabled=\{running \|\| terminalPublish\}/);
+  assert.match(page, /role="progressbar"/);
+  assert.match(page, /aria-valuenow=\{progress\}/);
   assert.match(css, /@media \(max-width: 760px\)/);
   assert.match(css, /overflow-x:\s*clip/);
   assert.match(css, /\.imageCards/);

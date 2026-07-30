@@ -915,7 +915,16 @@ export default function Home() {
               <div><span><i /> LIVE PROGRESS</span><h3>{progressLabel}</h3></div>
               <strong>{progress}%</strong>
             </div>
-            <div className="progressTrack"><i style={{ width: `${progress}%` }} /></div>
+            <div
+              className="progressTrack"
+              role="progressbar"
+              aria-label="内容任务总进度"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress}
+            >
+              <i style={{ width: `${progress}%` }} />
+            </div>
             <div className="progressMeta">
               <span>{Math.max(1, activeStage + 1)} / 5 阶段</span>
               <span>当前排版：{layouts[layout].name}</span>
