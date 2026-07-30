@@ -1911,7 +1911,7 @@ def run_publish(identifier: str, *, live: bool, confirmation: str = "") -> dict[
     job = load_job(identifier)
     current = str((job.get("publish") or {}).get("status") or "")
     if current in SUBMITTED_STATES:
-        raise HubError("该任务已经提交或成功，禁止重复发布")
+        raise HubError("该任务已经提交或成功；请新建任务后再运行预检，避免破坏历史记录或重复发布")
     if live:
         if confirmation.strip() != "确认正式发布":
             raise HubError("正式发布需要输入：确认正式发布")

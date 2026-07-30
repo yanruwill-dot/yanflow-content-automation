@@ -295,7 +295,11 @@ class HubHandler(BaseHTTPRequestHandler):
             except Exception as exc:
                 try:
                     job = core.load_job(identifier)
-                    if job.get("status") not in {"failed", "blocked"}:
+                    publish_status = str((job.get("publish") or {}).get("status") or "")
+                    if (
+                        job.get("status") not in {"failed", "blocked"}
+                        and publish_status not in core.SUBMITTED_STATES
+                    ):
                         core.update_job(
                             identifier,
                             status="failed",
@@ -394,7 +398,11 @@ class HubHandler(BaseHTTPRequestHandler):
             )
             if dry_match:
                 identifier = dry_match.group(1)
-                core.load_job(identifier)
+                job = core.load_job(identifier)
+                if str((job.get("publish") or {}).get("status") or "") in core.SUBMITTED_STATES:
+                    raise core.HubError(
+                        "该任务已经提交或成功；请新建任务后再运行预检，避免破坏历史记录或重复发布"
+                    )
                 self.start_background(
                     identifier,
                     "发布预检",

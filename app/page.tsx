@@ -324,6 +324,11 @@ export default function Home() {
       (["published", "submitted", "partial_success"].includes(job.status) ||
         ["success", "submitted", "partial_success"].includes(job.publish?.status || "")),
   );
+  const hasGeneratedImages = Boolean(job?.images?.items?.length);
+  const preflightUnavailable =
+    running || terminalPublish || !job || !hasGeneratedImages;
+  const liveReady = job?.publish?.status === "dry_run_passed";
+  const liveUnavailable = running || terminalPublish || !liveReady;
 
   async function bridgeFetch(
     path: string,
@@ -459,6 +464,24 @@ export default function Home() {
   function pairBridge() {
     setBridgeState("connecting");
     window.location.href = PAIR_URL;
+  }
+
+  function startNewTask() {
+    const freshOutput = buildOutput(brief, audience);
+    setJob(null);
+    setRiskChecked(false);
+    setProgress(0);
+    setProgressLabel("新任务已就绪，请先生成 5 个爆款候选");
+    setActiveStage(0);
+    setOutput(freshOutput);
+    setSelectedTopicId(freshOutput.topics[0]?.id || "");
+    setImageUrls((current) => {
+      revokeBlobUrls(current);
+      return [];
+    });
+    window.localStorage.removeItem(DEMO_OUTPUT_STORAGE_KEY);
+    setToast("已进入新任务：确认方向和账号后，先生成候选，再生成九图，最后运行预检");
+    document.getElementById("factory")?.scrollIntoView({ behavior: "smooth" });
   }
 
   function accountIds() {
@@ -597,7 +620,7 @@ export default function Home() {
     try {
       let targetJob = job;
       const currentSelected = job?.research?.selected?.title;
-      if (!targetJob || currentSelected !== selectedTopic.title) {
+      if (!targetJob || terminalPublish || currentSelected !== selectedTopic.title) {
         setProgressLabel("正在按你选中的爆款题目重写内容");
         const created = await createRealJob(selectedTopic.title);
         updateFromJob(created);
@@ -692,8 +715,16 @@ export default function Home() {
   }
 
   async function runPreflight() {
-    if (bridgeState !== "connected" || !job) {
+    if (bridgeState !== "connected") {
       pairBridge();
+      return;
+    }
+    if (!job) {
+      setToast("先生成一个新任务，再生成 Image2 九图");
+      return;
+    }
+    if (terminalPublish) {
+      setToast("当前是已发布历史任务，请先点“新建任务”再预检");
       return;
     }
     if (!job.images?.items?.length) {
@@ -789,7 +820,7 @@ export default function Home() {
         <section className="metrics" aria-label="任务概览">
           <article className="metric primary">
             <span>当前任务</span>
-            <strong>{running ? "运行中" : job ? "已连接" : "待开始"}</strong>
+            <strong>{running ? "运行中" : terminalPublish ? "已发布历史" : job ? "进行中" : "待开始"}</strong>
             <small>{platformLabel}</small>
           </article>
           <article className="metric">
@@ -891,7 +922,13 @@ export default function Home() {
                 <p>先出爆款候选 → 你选择 → Image2 九图 → Dry-run → 人工确认发布</p>
               </div>
               <button type="submit" disabled={running || bridgeState === "connecting"}>
-                {bridgeState !== "connected" ? "连接本机开始" : running ? "正在生成…" : "生成 5 个爆款候选"}
+                {bridgeState !== "connected"
+                  ? "连接本机开始"
+                  : running
+                    ? "正在生成…"
+                    : terminalPublish
+                      ? "新建任务并生成 5 个候选"
+                      : "生成 5 个爆款候选"}
                 <i aria-hidden="true">↗</i>
               </button>
             </div>
@@ -994,7 +1031,11 @@ export default function Home() {
               <h2>小红书高清图组</h2>
             </div>
             <button className="imageGenerateButton" onClick={generateImages} disabled={running}>
-              {imageUrls.length ? "按当前选题重新生成" : "生成 9 张 Image2 高清图"}
+              {terminalPublish
+                ? "复制选题并生成新九图"
+                : imageUrls.length
+                  ? "按当前选题重新生成"
+                  : "生成 9 张 Image2 高清图"}
             </button>
           </header>
           {imageUrls.length ? (
@@ -1023,23 +1064,34 @@ export default function Home() {
           <div className="riskGrid">
             <article><span className="statusDot" /><div><b>Image2 质检</b><small>中文、裁切、3:4、重复图片</small></div><strong>{imageUrls.length ? "已生成" : "待生成"}</strong></article>
             <article><span className="statusDot" /><div><b>真实账号槽</b><small>可换号，登录动作只在本机完成</small></div><strong>{bridgeState === "connected" ? `${accounts.length} 个已读取` : "待连接"}</strong></article>
-            <article className={riskChecked ? "" : "guarded"}><span className="statusDot" /><div><b>完整发布预检</b><small>账号、Schema、限频、重复提交</small></div><strong>{riskChecked ? "已通过" : "待执行"}</strong></article>
+            <article className={riskChecked ? "" : "guarded"}><span className="statusDot" /><div><b>{terminalPublish ? "已发布历史任务" : "完整发布预检"}</b><small>{terminalPublish ? "历史任务只读，新内容要先新建任务" : "账号、Schema、限频、重复提交"}</small></div><strong>{terminalPublish ? "已完成" : riskChecked ? "已通过" : "待执行"}</strong></article>
           </div>
           <div className="actions">
             <button className="secondary" onClick={() => refreshAccounts()} disabled={bridgeState !== "connected"}>刷新账号状态</button>
             <button className="secondary" onClick={downloadPack}>下载内容包</button>
-            <button className="secondary" onClick={runPreflight} disabled={running || terminalPublish}>
-              {terminalPublish ? "发布预检已完成" : "运行完整 Dry-run"}
+            {terminalPublish && <button className="newTaskAction" onClick={startNewTask}>新建任务</button>}
+            <button className="secondary" onClick={runPreflight} disabled={preflightUnavailable}>
+              {terminalPublish
+                ? "新建任务后预检"
+                : !job
+                  ? "先生成新任务"
+                  : !hasGeneratedImages
+                    ? "先生成 Image2 九图"
+                    : "运行完整 Dry-run"}
             </button>
-            <button className="primaryAction" onClick={requestLivePublish} disabled={running || terminalPublish}>
-              {terminalPublish ? (publishedUrl ? "已发布" : "已提交") : "确认后正式发布"}
+            <button className="primaryAction" onClick={requestLivePublish} disabled={liveUnavailable}>
+              {terminalPublish
+                ? (publishedUrl ? "已发布" : "已提交")
+                : liveReady
+                  ? "确认后正式发布"
+                  : "预检通过后可发布"}
             </button>
           </div>
           {terminalPublish && (
             <div className="publishReceipt" role="status">
               <div>
-                <strong>{publishedUrl ? "平台已发表并返回公开链接" : "平台已接收，等待公开链接"}</strong>
-                <small>{job?.message || "真实发布状态已从本机任务恢复"}</small>
+                <strong>当前是已发布历史任务</strong>
+                <small>{job?.message || "历史记录只读；点击“新建任务”开始下一轮，系统不会覆盖或重复提交"}</small>
               </div>
               {publishedUrl && (
                 <a href={publishedUrl} target="_blank" rel="noreferrer">查看小红书公开内容 ↗</a>

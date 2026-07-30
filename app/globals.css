@@ -630,6 +630,12 @@ a { color: inherit; text-decoration: none; }
 }
 .actions button:disabled { opacity: .55; cursor: not-allowed; }
 .actions .secondary { background: transparent; }
+.actions .newTaskAction {
+  border-color: rgba(202, 255, 63, .45);
+  background: var(--acid);
+  color: var(--ink);
+  font-weight: 750;
+}
 .actions .primaryAction { border-color: var(--orange); background: var(--orange); color: #190c08; font-weight: 750; }
 .publishReceipt {
   margin-top: 18px;

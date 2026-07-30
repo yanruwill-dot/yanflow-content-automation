@@ -233,6 +233,38 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertIn("dry-run", payload["error"].lower())
 
+    def test_dry_run_endpoint_refuses_published_job_synchronously(self) -> None:
+        _, created, _ = self.request(
+            "/api/jobs",
+            method="POST",
+            body={"brief": "已发布历史任务", "targets": ["小红书"]},
+            token=True,
+        )
+        identifier = created["job"]["id"]
+        core.update_job(
+            identifier,
+            status="published",
+            message="平台已返回公开链接",
+            publish={
+                "status": "success",
+                "publish_id": "published-item",
+                "public_urls": ["https://example.org/published"],
+            },
+        )
+
+        status, payload, _ = self.request(
+            f"/api/jobs/{identifier}/publish/dry-run",
+            method="POST",
+            body={},
+            token=True,
+        )
+
+        self.assertEqual(status, 400)
+        self.assertIn("新建任务", payload["error"])
+        preserved = core.load_job(identifier)
+        self.assertEqual(preserved["status"], "published")
+        self.assertEqual(preserved["publish"]["status"], "success")
+
 
 if __name__ == "__main__":
     unittest.main()

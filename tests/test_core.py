@@ -322,6 +322,30 @@ class CoreTests(unittest.TestCase):
         with self.assertRaisesRegex(core.HubError, "dry-run"):
             core.run_publish(job["id"], live=True, confirmation="确认正式发布")
 
+    def test_preflight_refuses_published_job_without_mutating_history(self) -> None:
+        job = self.create_job()
+        core.update_job(
+            job["id"],
+            status="published",
+            message="平台已返回公开链接",
+            publish={
+                "status": "success",
+                "publish_id": "published-item",
+                "public_urls": ["https://example.org/published"],
+            },
+        )
+
+        with self.assertRaisesRegex(core.HubError, "新建任务"):
+            core.run_publish(job["id"], live=False)
+
+        preserved = core.load_job(job["id"])
+        self.assertEqual(preserved["status"], "published")
+        self.assertEqual(preserved["publish"]["status"], "success")
+        self.assertEqual(
+            preserved["publish"]["public_urls"],
+            ["https://example.org/published"],
+        )
+
     def test_live_publish_preserves_success_when_another_platform_fails(self) -> None:
         job = self.create_job()
         core.update_job(
