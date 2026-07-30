@@ -253,10 +253,30 @@ function normalizeSavedOutput(value: Output): Output {
   };
 }
 
+function isRestorableJob(job: Job) {
+  return (
+    ["images_ready", "preflight_passed", "submitted", "published", "partial_success"].includes(
+      job.status,
+    ) && Boolean(job.images?.items?.length)
+  );
+}
+
+function publishGatePassed(job: Job) {
+  return (
+    ["preflight_passed", "submitted", "published", "partial_success"].includes(job.status) ||
+    ["dry_run_passed", "submitted", "success", "partial_success"].includes(
+      job.publish?.status || "",
+    )
+  );
+}
+
 function stageFromJob(job: Job) {
   const phase = job.progress_detail?.phase || job.status;
   if (phase === "images" || job.status === "images_ready") return 2;
-  if (phase === "publish" || ["preflight_passed", "published", "submitted"].includes(job.status)) return 4;
+  if (
+    phase === "publish" ||
+    ["preflight_passed", "published", "submitted", "partial_success"].includes(job.status)
+  ) return 4;
   if (phase === "content") return 1;
   return 0;
 }
@@ -298,6 +318,12 @@ export default function Home() {
   );
   const selectedTopic =
     output.topics.find((item) => item.id === selectedTopicId) || output.topics[0];
+  const publishedUrl = job?.publish?.public_urls?.[0] || "";
+  const terminalPublish = Boolean(
+    job &&
+      (["published", "submitted", "partial_success"].includes(job.status) ||
+        ["success", "submitted", "partial_success"].includes(job.publish?.status || "")),
+  );
 
   async function bridgeFetch(
     path: string,
@@ -351,12 +377,10 @@ export default function Home() {
             )?.id || "",
       );
       setBridgeState("connected");
-      let restored = false;
+      let restoredJob: Job | null = null;
       try {
         const jobsPayload = await bridgeFetch("/api/jobs", {}, token, base);
-        const latestReady = ((jobsPayload.jobs || []) as Job[]).find(
-          (item) => item.status === "images_ready" && item.images?.items?.length,
-        );
+        const latestReady = ((jobsPayload.jobs || []) as Job[]).find(isRestorableJob);
         if (latestReady) {
           updateFromJob(latestReady);
           const nextOutput = outputFromJob(latestReady, audience);
@@ -369,14 +393,14 @@ export default function Home() {
             revokeBlobUrls(current);
             return blobs;
           });
-          restored = true;
+          restoredJob = latestReady;
         }
       } catch {
         // 账号连接成功即可继续；历史成品恢复失败时保留内置示例。
       }
       setToast(
-        restored
-          ? `本机已连接，已恢复最新九图成品和 ${nextAccounts.length} 个真实账号槽`
+        restoredJob
+          ? `本机已连接，已恢复${restoredJob.status === "published" ? "已发布" : "最新"}任务、九图和 ${nextAccounts.length} 个真实账号槽`
           : `本机已连接，读到 ${nextAccounts.length} 个真实账号槽`,
       );
     } catch (error) {
@@ -448,6 +472,7 @@ export default function Home() {
 
   function updateFromJob(next: Job) {
     setJob(next);
+    setRiskChecked(publishGatePassed(next));
     setProgress(Number(next.progress || 0));
     setProgressLabel(
       next.progress_detail?.current_step || next.message || "正在处理",
@@ -994,9 +1019,24 @@ export default function Home() {
           <div className="actions">
             <button className="secondary" onClick={() => refreshAccounts()} disabled={bridgeState !== "connected"}>刷新账号状态</button>
             <button className="secondary" onClick={downloadPack}>下载内容包</button>
-            <button className="secondary" onClick={runPreflight} disabled={running}>运行完整 Dry-run</button>
-            <button className="primaryAction" onClick={requestLivePublish} disabled={running}>确认后正式发布</button>
+            <button className="secondary" onClick={runPreflight} disabled={running || terminalPublish}>
+              {terminalPublish ? "发布预检已完成" : "运行完整 Dry-run"}
+            </button>
+            <button className="primaryAction" onClick={requestLivePublish} disabled={running || terminalPublish}>
+              {terminalPublish ? (publishedUrl ? "已发布" : "已提交") : "确认后正式发布"}
+            </button>
           </div>
+          {terminalPublish && (
+            <div className="publishReceipt" role="status">
+              <div>
+                <strong>{publishedUrl ? "平台已发表并返回公开链接" : "平台已接收，等待公开链接"}</strong>
+                <small>{job?.message || "真实发布状态已从本机任务恢复"}</small>
+              </div>
+              {publishedUrl && (
+                <a href={publishedUrl} target="_blank" rel="noreferrer">查看小红书公开内容 ↗</a>
+              )}
+            </div>
+          )}
           <p className="boundary">
             GitHub 页面不保存账号密码、Cookie 或 API 密钥。点击登录槽会打开本机蚁小二4.0；扫码、验证码、实名确认必须由你完成。平台审核和风控无法保证“永不封禁”，系统只做合规表达、去重、限频和人工确认。
           </p>

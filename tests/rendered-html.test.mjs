@@ -30,9 +30,15 @@ test("ships the complete static application and required public assets", async (
   assert.match(page, /买再多AI工具也不提效/);
   assert.match(page, /xhsCopyPreview/);
   assert.match(page, /老板7天就能启动第一轮/);
+  assert.match(page, /function isRestorableJob/);
+  assert.match(page, /"images_ready", "preflight_passed", "submitted", "published", "partial_success"/);
+  assert.match(page, /function publishGatePassed/);
+  assert.match(page, /查看小红书公开内容/);
+  assert.match(page, /disabled=\{running \|\| terminalPublish\}/);
   assert.match(css, /@media \(max-width: 760px\)/);
   assert.match(css, /overflow-x:\s*clip/);
   assert.match(css, /\.imageCards/);
+  assert.match(css, /\.publishReceipt/);
   assert.ok(files.includes("og.png"));
   assert.ok(files.includes("favicon.png"));
   assert.equal(sampleImages.filter((file) => file.endsWith(".png")).length, 9);
